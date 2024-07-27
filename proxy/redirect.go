@@ -60,6 +60,10 @@ func (hr *HTTPRedirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (hr *HTTPRedirect) replacePort(host string, port uint16) (string, error) {
+	return replacePort(host, port)
+}
+
+func replacePort(host string, port uint16) (string, error) {
 	if len(host) == 0 {
 		return "", fmt.Errorf("bad host")
 	}

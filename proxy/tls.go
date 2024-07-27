@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 
 	"github.com/blend/go-sdk/logger"
 )
@@ -18,6 +19,7 @@ type TLSServer struct {
 	Config       TLSConfig
 	Server       *http.Server
 	ReverseProxy *httputil.ReverseProxy
+	upstreamPort uint16
 }
 
 func NewTLSServer(log logger.Log, cfg TLSConfig) (*TLSServer, error) {
@@ -25,11 +27,18 @@ func NewTLSServer(log logger.Log, cfg TLSConfig) (*TLSServer, error) {
 	if err != nil {
 		return nil, err
 	}
+	up := uint16(0)
+	parsed, err := strconv.ParseUint(target.Port(), 10, 16)
+	if err == nil {
+		up = uint16(parsed)
+	}
+	log.Debugf("proxying to target %s", target.String())
 	rev := httputil.NewSingleHostReverseProxy(target)
 	t := &TLSServer{
 		Config:       cfg,
 		ReverseProxy: rev,
 		Log:          log,
+		upstreamPort: up,
 	}
 	serv := &http.Server{
 		Addr:    BindAddr(cfg.Port),
@@ -52,7 +61,17 @@ func (s *TLSServer) Stop() error {
 
 func (s *TLSServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.Log.Infof("Proxying request for %s", req.URL.String())
+	if s.upstreamPort != 0 {
+		host, err := replacePort(req.Host, s.upstreamPort)
+		if err == nil {
+			req.Host = host
+		}
+	}
 	s.ReverseProxy.ServeHTTP(rw, req)
+}
+
+func (s *TLSServer) rewritePort(pr *httputil.ProxyRequest) {
+
 }
 
 func ParsePemEd25519PrivateKey(data []byte) (ed25519.PrivateKey, error) {
