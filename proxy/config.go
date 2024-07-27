@@ -15,6 +15,7 @@ type Config struct {
 }
 
 type TLSConfig struct {
+	Enabled  bool   `yaml:"enabled"`
 	Port     uint16 `yaml:"port"`
 	Upstream string `yaml:"upstream"`
 	CertFile string `yaml:"certFile"`
@@ -22,6 +23,7 @@ type TLSConfig struct {
 }
 
 type RedirectConfig struct {
+	Enabled      bool   `yaml:"enabled"`
 	Port         uint16 `yaml:"port"`
 	UpstreamPort uint16 `yaml:"upstreamPort"`
 }
